@@ -8,11 +8,11 @@ import android.content.Intent;
 /**
  * Created by Kelvin on 4/18/16.
  */
-public class BroadcastReceiver_BTState extends BroadcastReceiver {
+public class CreateToastOnBtAdaptorStateChange extends BroadcastReceiver {
 
     Context activityContext;
 
-    public BroadcastReceiver_BTState(Context activityContext) {
+    public CreateToastOnBtAdaptorStateChange(Context activityContext) {
         this.activityContext = activityContext;
     }
 
@@ -35,6 +35,12 @@ public class BroadcastReceiver_BTState extends BroadcastReceiver {
                     break;
                 case BluetoothAdapter.STATE_TURNING_ON:
                     Utils.toast(activityContext, "Bluetooth is turning on...");
+                    break;
+                case BluetoothAdapter.ERROR:
+                    Utils.toast(activityContext, "Bluetooth adaptor error");
+                    break;
+                default:
+                    Utils.toast(activityContext, "Unhandled event: " + state);
                     break;
             }
         }

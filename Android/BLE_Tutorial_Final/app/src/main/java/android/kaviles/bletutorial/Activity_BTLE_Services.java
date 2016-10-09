@@ -6,9 +6,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ExpandableListView;
@@ -19,11 +19,9 @@ import java.util.HashMap;
 import java.util.List;
 
 public class Activity_BTLE_Services extends AppCompatActivity implements ExpandableListView.OnChildClickListener {
-    private final static String TAG = Activity_BTLE_Services.class.getSimpleName();
-
     public static final String EXTRA_NAME = "android.aviles.bletutorial.Activity_BTLE_Services.NAME";
     public static final String EXTRA_ADDRESS = "android.aviles.bletutorial.Activity_BTLE_Services.ADDRESS";
-
+    private final static String TAG = Activity_BTLE_Services.class.getSimpleName();
     private ListAdapter_BTLE_Services expandableListAdapter;
     private ExpandableListView expandableListView;
 
@@ -100,6 +98,25 @@ public class Activity_BTLE_Services extends AppCompatActivity implements Expanda
     }
 
     @Override
+    protected void onStop() {
+        super.onStop();
+
+        unregisterReceiver(mGattUpdateReceiver);
+        unbindService(mBTLE_ServiceConnection);
+        mBTLE_Service_Intent = null;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
 
@@ -109,25 +126,6 @@ public class Activity_BTLE_Services extends AppCompatActivity implements Expanda
         mBTLE_Service_Intent = new Intent(this, Service_BTLE_GATT.class);
         bindService(mBTLE_Service_Intent, mBTLE_ServiceConnection, Context.BIND_AUTO_CREATE);
         startService(mBTLE_Service_Intent);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-        unregisterReceiver(mGattUpdateReceiver);
-        unbindService(mBTLE_ServiceConnection);
-        mBTLE_Service_Intent = null;
     }
 
     @Override
@@ -177,7 +175,7 @@ public class Activity_BTLE_Services extends AppCompatActivity implements Expanda
                 List<BluetoothGattCharacteristic> characteristicsList = service.getCharacteristics();
                 ArrayList<BluetoothGattCharacteristic> newCharacteristicsList = new ArrayList<>();
 
-                for (BluetoothGattCharacteristic characteristic: characteristicsList) {
+                for (BluetoothGattCharacteristic characteristic : characteristicsList) {
                     characteristics_HashMap.put(characteristic.getUuid().toString(), characteristic);
                     newCharacteristicsList.add(characteristic);
                 }

@@ -9,9 +9,10 @@ import android.os.Handler;
 /**
  * Created by Kelvin on 4/20/16.
  */
-public class Scanner_BTLE {
+@SuppressWarnings("ALL")
+public class BtleScanner {
 
-    private MainActivity ma;
+    private MainActivity mainActivity;
 
     private BluetoothAdapter mBluetoothAdapter;
     private boolean mScanning;
@@ -20,16 +21,30 @@ public class Scanner_BTLE {
     private long scanPeriod;
     private int signalStrength;
 
-    public Scanner_BTLE(MainActivity mainActivity, long scanPeriod, int signalStrength) {
-        ma = mainActivity;
+    // Device scan callback.
+    private BluetoothAdapter.LeScanCallback mLeScanCallback =
+            new BluetoothAdapter.LeScanCallback() {
+                @Override
+                public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
+                    final int new_rssi = rssi;
+                    if (rssi > signalStrength) {
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                mainActivity.addDevice(device, new_rssi);
+                            }
+                        });
+                    }
+                }
+            };
 
+    public BtleScanner(MainActivity mainActivity, long scanPeriod, int minSignalStrength) {
+        this.mainActivity = mainActivity;
         mHandler = new Handler();
-
         this.scanPeriod = scanPeriod;
-        this.signalStrength = signalStrength;
-
+        this.signalStrength = minSignalStrength;
         final BluetoothManager bluetoothManager =
-                (BluetoothManager) ma.getSystemService(Context.BLUETOOTH_SERVICE);
+                (BluetoothManager) this.mainActivity.getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = bluetoothManager.getAdapter();
     }
 
@@ -39,16 +54,11 @@ public class Scanner_BTLE {
 
     public void start() {
         if (!Utils.checkBluetooth(mBluetoothAdapter)) {
-            Utils.requestUserBluetooth(ma);
-            ma.stopScan();
-        }
-        else {
+            Utils.requestUserBluetooth(mainActivity);
+            mainActivity.stopScan();
+        } else {
             scanLeDevice(true);
         }
-    }
-
-    public void stop() {
-        scanLeDevice(false);
     }
 
     // If you want to scan for only specific types of peripherals,
@@ -56,47 +66,28 @@ public class Scanner_BTLE {
     // providing an array of UUID objects that specify the GATT services your app supports.
     private void scanLeDevice(final boolean enable) {
         if (enable && !mScanning) {
-            Utils.toast(ma.getApplicationContext(), "Starting BLE scan...");
+            Utils.toast(mainActivity.getApplicationContext(), "Starting BLE scan...");
 
             // Stops scanning after a pre-defined scan period.
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    Utils.toast(ma.getApplicationContext(), "Stopping BLE scan...");
-
+                    Utils.toast(mainActivity.getApplicationContext(), "Stopping BLE scan...");
                     mScanning = false;
                     mBluetoothAdapter.stopLeScan(mLeScanCallback);
-
-                    ma.stopScan();
+                    mainActivity.stopScan();
                 }
             }, scanPeriod);
-
             mScanning = true;
             mBluetoothAdapter.startLeScan(mLeScanCallback);
 //            mBluetoothAdapter.startLeScan(uuids, mLeScanCallback);
-        }
-        else {
+        } else {
             mScanning = false;
             mBluetoothAdapter.stopLeScan(mLeScanCallback);
         }
     }
 
-    // Device scan callback.
-    private BluetoothAdapter.LeScanCallback mLeScanCallback =
-            new BluetoothAdapter.LeScanCallback() {
-
-                @Override
-                public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
-
-                    final int new_rssi = rssi;
-                    if (rssi > signalStrength) {
-                        mHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                ma.addDevice(device, new_rssi);
-                            }
-                        });
-                    }
-                }
-            };
+    public void stop() {
+        scanLeDevice(false);
+    }
 }

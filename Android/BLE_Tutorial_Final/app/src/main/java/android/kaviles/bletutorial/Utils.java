@@ -12,18 +12,12 @@ import android.widget.Toast;
 /**
  * Created by Kelvin on 5/8/16.
  */
+@SuppressWarnings("ALL")
 public class Utils {
 
     public static boolean checkBluetooth(BluetoothAdapter bluetoothAdapter) {
-
-        // Ensures Bluetooth is available on the device and it is enabled. If not,
-        // displays a dialog requesting user permission to enable Bluetooth.
-        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
-            return false;
-        }
-        else {
-            return true;
-        }
+        // Ensures Bluetooth is available on the device and it is enabled.
+        return bluetoothAdapter != null && bluetoothAdapter.isEnabled();
     }
 
     public static void requestUserBluetooth(Activity activity) {
@@ -46,7 +40,7 @@ public class Utils {
     public static String hexToString(byte[] data) {
         final StringBuilder sb = new StringBuilder(data.length);
 
-        for(byte byteChar : data) {
+        for (byte byteChar : data) {
             sb.append(String.format("%02X ", byteChar));
         }
 

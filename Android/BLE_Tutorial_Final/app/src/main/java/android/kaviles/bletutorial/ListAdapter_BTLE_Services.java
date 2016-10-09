@@ -1,19 +1,14 @@
 package android.kaviles.bletutorial;
 
 import android.app.Activity;
-import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.content.Context;
-import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
-import android.widget.EditText;
 import android.widget.TextView;
-
-import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,7 +23,7 @@ public class ListAdapter_BTLE_Services extends BaseExpandableListAdapter {
     private HashMap<String, ArrayList<BluetoothGattCharacteristic>> characteristics_HashMap;
 
     public ListAdapter_BTLE_Services(Activity activity, ArrayList<BluetoothGattService> listDataHeader,
-                                 HashMap<String, ArrayList<BluetoothGattCharacteristic>> listChildData) {
+                                     HashMap<String, ArrayList<BluetoothGattCharacteristic>> listChildData) {
 
         this.activity = activity;
         this.services_ArrayList = listDataHeader;
@@ -96,7 +91,7 @@ public class ListAdapter_BTLE_Services extends BaseExpandableListAdapter {
 
         BluetoothGattCharacteristic bluetoothGattCharacteristic = (BluetoothGattCharacteristic) getChild(groupPosition, childPosition);
 
-        String characteristicUUID =  bluetoothGattCharacteristic.getUuid().toString();
+        String characteristicUUID = bluetoothGattCharacteristic.getUuid().toString();
         if (convertView == null) {
             LayoutInflater inflater =
                     (LayoutInflater) activity.getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -130,8 +125,7 @@ public class ListAdapter_BTLE_Services extends BaseExpandableListAdapter {
         byte[] data = bluetoothGattCharacteristic.getValue();
         if (data != null) {
             tv_value.setText("Value: " + Utils.hexToString(data));
-        }
-        else {
+        } else {
             tv_value.setText("Value: ---");
         }
 

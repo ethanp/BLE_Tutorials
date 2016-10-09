@@ -23,30 +23,26 @@ import java.util.UUID;
  * Created by Kelvin on 5/8/16.
  */
 public class Service_BTLE_GATT extends Service {
-    /**
-     * Service for managing connection and data communication with a GATT server hosted on a
-     * given Bluetooth LE device.
-     */
-    private final static String TAG = Service_BTLE_GATT.class.getSimpleName();
-
-    private BluetoothManager mBluetoothManager;
-    private BluetoothAdapter mBluetoothAdapter;
-    private String mBluetoothDeviceAddress;
-    private BluetoothGatt mBluetoothGatt;
-
-    private int mConnectionState = STATE_DISCONNECTED;
-    private static final int STATE_DISCONNECTED = 0;
-    private static final int STATE_CONNECTING = 1;
-    private static final int STATE_CONNECTED = 2;
-
     public final static String ACTION_GATT_CONNECTED = "android.kaviles.bletutorial.Service_BTLE_GATT.ACTION_GATT_CONNECTED";
     public final static String ACTION_GATT_DISCONNECTED = "android.kaviles.bletutorial.Service_BTLE_GATT.ACTION_GATT_DISCONNECTED";
     public final static String ACTION_GATT_SERVICES_DISCOVERED = "android.kaviles.bletutorial.Service_BTLE_GATT.ACTION_GATT_SERVICES_DISCOVERED";
     public final static String ACTION_DATA_AVAILABLE = "android.kaviles.bletutorial.Service_BTLE_GATT.ACTION_DATA_AVAILABLE";
     public final static String EXTRA_UUID = "android.kaviles.bletutorial.Service_BTLE_GATT.EXTRA_UUID";
     public final static String EXTRA_DATA = "android.kaviles.bletutorial.Service_BTLE_GATT.EXTRA_DATA";
-
-
+    /**
+     * Service for managing connection and data communication with a GATT server hosted on a
+     * given Bluetooth LE device.
+     */
+    private final static String TAG = Service_BTLE_GATT.class.getSimpleName();
+    private static final int STATE_DISCONNECTED = 0;
+    private static final int STATE_CONNECTING = 1;
+    private static final int STATE_CONNECTED = 2;
+    private final IBinder mBinder = new BTLeServiceBinder();
+    private BluetoothManager mBluetoothManager;
+    private BluetoothAdapter mBluetoothAdapter;
+    private String mBluetoothDeviceAddress;
+    private BluetoothGatt mBluetoothGatt;
+    private int mConnectionState = STATE_DISCONNECTED;
     // Implements callback methods for GATT events that the app cares about.  For example,
     // connection change and services discovered.
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
@@ -63,8 +59,7 @@ public class Service_BTLE_GATT extends Service {
                 Log.i(TAG, "Connected to GATT server.");
                 // Attempts to discover services after successful connection.
                 Log.i(TAG, "Attempting to start service discovery:" + mBluetoothGatt.discoverServices());
-            }
-            else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 intentAction = ACTION_GATT_DISCONNECTED;
 
                 mConnectionState = STATE_DISCONNECTED;
@@ -80,8 +75,7 @@ public class Service_BTLE_GATT extends Service {
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
-            }
-            else {
+            } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
             }
         }
@@ -127,29 +121,21 @@ public class Service_BTLE_GATT extends Service {
         if (data != null && data.length > 0) {
 
             intent.putExtra(EXTRA_DATA, new String(data) + "\n" + Utils.hexToString(data));
-        }
-        else {
+        } else {
             intent.putExtra(EXTRA_DATA, "0");
         }
 
         sendBroadcast(intent);
     }
 
-    public class BTLeServiceBinder extends Binder {
+    @Override
+    public void onCreate() {
 
-        Service_BTLE_GATT getService() {
-            return Service_BTLE_GATT.this;
-        }
     }
 
     @Override
     public IBinder onBind(Intent intent) {
         return mBinder;
-    }
-
-    @Override
-    public void onCreate() {
-
     }
 
     @Override
@@ -161,7 +147,19 @@ public class Service_BTLE_GATT extends Service {
         return super.onUnbind(intent);
     }
 
-    private final IBinder mBinder = new BTLeServiceBinder();
+    /**
+     * After using a given BLE device, the app must call this method to ensure resources are
+     * released properly.
+     */
+    public void close() {
+
+        if (mBluetoothGatt == null) {
+            return;
+        }
+
+        mBluetoothGatt.close();
+        mBluetoothGatt = null;
+    }
 
     /**
      * Initializes a reference to the local Bluetooth adapter.
@@ -192,11 +190,10 @@ public class Service_BTLE_GATT extends Service {
      * Connects to the GATT server hosted on the Bluetooth LE device.
      *
      * @param address The device address of the destination device.
-     *
      * @return Return true if the connection is initiated successfully. The connection result
-     *         is reported asynchronously through the
-     *         {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
-     *         callback.
+     * is reported asynchronously through the
+     * {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
+     * callback.
      */
     public boolean connect(final String address) {
 
@@ -212,8 +209,7 @@ public class Service_BTLE_GATT extends Service {
             if (mBluetoothGatt.connect()) {
                 mConnectionState = STATE_CONNECTING;
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -248,20 +244,6 @@ public class Service_BTLE_GATT extends Service {
         }
 
         mBluetoothGatt.disconnect();
-    }
-
-    /**
-     * After using a given BLE device, the app must call this method to ensure resources are
-     * released properly.
-     */
-    public void close() {
-
-        if (mBluetoothGatt == null) {
-            return;
-        }
-
-        mBluetoothGatt.close();
-        mBluetoothGatt = null;
     }
 
     /**
@@ -300,7 +282,7 @@ public class Service_BTLE_GATT extends Service {
      * Enables or disables notification on a give characteristic.
      *
      * @param characteristic Characteristic to act on.
-     * @param enabled If true, enable notification.  False otherwise.
+     * @param enabled        If true, enable notification.  False otherwise.
      */
     public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic, boolean enabled) {
 
@@ -316,8 +298,7 @@ public class Service_BTLE_GATT extends Service {
 
         if (enabled) {
             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-        }
-        else {
+        } else {
             descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
         }
 
@@ -337,5 +318,12 @@ public class Service_BTLE_GATT extends Service {
         }
 
         return mBluetoothGatt.getServices();
+    }
+
+    public class BTLeServiceBinder extends Binder {
+
+        Service_BTLE_GATT getService() {
+            return Service_BTLE_GATT.this;
+        }
     }
 }

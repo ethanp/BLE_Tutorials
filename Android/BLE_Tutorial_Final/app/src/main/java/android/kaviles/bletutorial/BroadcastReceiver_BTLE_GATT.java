@@ -30,16 +30,13 @@ public class BroadcastReceiver_BTLE_GATT extends BroadcastReceiver {
 
         if (Service_BTLE_GATT.ACTION_GATT_CONNECTED.equals(action)) {
             mConnected = true;
-        }
-        else if (Service_BTLE_GATT.ACTION_GATT_DISCONNECTED.equals(action)) {
+        } else if (Service_BTLE_GATT.ACTION_GATT_DISCONNECTED.equals(action)) {
             mConnected = false;
             Utils.toast(activity.getApplicationContext(), "Disconnected From Device");
             activity.finish();
-        }
-        else if (Service_BTLE_GATT.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
+        } else if (Service_BTLE_GATT.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
             activity.updateServices();
-        }
-        else if (Service_BTLE_GATT.ACTION_DATA_AVAILABLE.equals(action)) {
+        } else if (Service_BTLE_GATT.ACTION_DATA_AVAILABLE.equals(action)) {
 
 //            String uuid = intent.getStringExtra(Service_BTLE_GATT.EXTRA_UUID);
 //            String data = intent.getStringExtra(Service_BTLE_GATT.EXTRA_DATA);
