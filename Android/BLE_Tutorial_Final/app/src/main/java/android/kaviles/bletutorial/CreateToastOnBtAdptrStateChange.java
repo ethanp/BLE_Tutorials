@@ -8,11 +8,11 @@ import android.content.Intent;
 /**
  * Created by Kelvin on 4/18/16.
  */
-public class CreateToastOnBtAdaptorStateChange extends BroadcastReceiver {
+public class CreateToastOnBtAdptrStateChange extends BroadcastReceiver {
 
     Context activityContext;
 
-    public CreateToastOnBtAdaptorStateChange(Context activityContext) {
+    public CreateToastOnBtAdptrStateChange(Context activityContext) {
         this.activityContext = activityContext;
     }
 

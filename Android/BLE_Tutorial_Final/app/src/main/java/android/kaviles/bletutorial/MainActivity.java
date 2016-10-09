@@ -31,9 +31,9 @@ public class MainActivity extends AppCompatActivity implements
     private HashMap<String, BtleDevice> mBtDevicesByName;
     private List<BtleDevice> mBtDevicesList;
     private BtleListAdapter btleListAdapter;
-    private Button btn_Scan;
+    private Button scanButton;
 
-    private CreateToastOnBtAdaptorStateChange mBTStateUpdateReceiver;
+    private CreateToastOnBtAdptrStateChange btAdaptorStateChangeListener;
     private BtleScanner mBtleScanner;
 
     @Override
@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements
             finish();
         }
 
-        mBTStateUpdateReceiver = new CreateToastOnBtAdaptorStateChange(getApplicationContext());
+        btAdaptorStateChangeListener = new CreateToastOnBtAdptrStateChange(getApplicationContext());
         final int scanPeriodFiveSeconds = 5000;
         final int minSignalStrength = -75;
         mBtleScanner = new BtleScanner(this, scanPeriodFiveSeconds, minSignalStrength);
@@ -62,8 +62,8 @@ public class MainActivity extends AppCompatActivity implements
         listView.setAdapter(btleListAdapter);
         listView.setOnItemClickListener(this);
 
-        btn_Scan = (Button) findViewById(R.id.btn_scan);
-        btn_Scan.setOnClickListener(this);
+        scanButton = (Button) findViewById(R.id.btn_scan);
+        scanButton.setOnClickListener(this);
 
         // ui note: we load the configured ListView into the DOMs existing ScrollView
         ((ScrollView) findViewById(R.id.scrollView)).addView(listView);
@@ -72,12 +72,12 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onStop() {
         super.onStop();
-        unregisterReceiver(mBTStateUpdateReceiver);
+        unregisterReceiver(btAdaptorStateChangeListener);
         stopScan();
     }
 
     public void stopScan() {
-        btn_Scan.setText("Scan Again");
+        scanButton.setText("Scan Again");
         mBtleScanner.stop();
     }
 
@@ -100,25 +100,20 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onPause() {
         super.onPause();
-
-//        unregisterReceiver(mBTStateUpdateReceiver);
         stopScan();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-//        registerReceiver(mBTStateUpdateReceiver, new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED));
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        // this intent is globally unique, so we just look for it
         IntentFilter changedFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        registerReceiver(mBTStateUpdateReceiver, changedFilter);
+        registerReceiver(btAdaptorStateChangeListener, changedFilter);
     }
 
+    /**
+     * user clicked on a specific bluetooth device in the list
+     */
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Context context = view.getContext();
@@ -129,12 +124,15 @@ public class MainActivity extends AppCompatActivity implements
         String name = mBtDevicesList.get(position).getName();
         String address = mBtDevicesList.get(position).getAddress();
 
-        Intent intent = new Intent(this, Activity_BTLE_Services.class);
-        intent.putExtra(Activity_BTLE_Services.EXTRA_NAME, name);
-        intent.putExtra(Activity_BTLE_Services.EXTRA_ADDRESS, address);
+        Intent intent = new Intent(this, BtleDeviceActivity.class);
+        intent.putExtra(BtleDeviceActivity.EXTRA_NAME, name);
+        intent.putExtra(BtleDeviceActivity.EXTRA_ADDRESS, address);
         startActivityForResult(intent, BTLE_SERVICES);
     }
 
+    /**
+     * user clicked on the scan button
+     */
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
@@ -152,22 +150,26 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void startScan() {
-        btn_Scan.setText("Scanning...");
+        scanButton.setText("Scanning...");
         mBtDevicesList.clear();
         mBtDevicesByName.clear();
         mBtleScanner.start();
     }
 
-    public void addDevice(BluetoothDevice device, int rssi) {
-        String address = device.getAddress();
-        if (!mBtDevicesByName.containsKey(address)) {
-            @SuppressWarnings("LocalVariableOfConcreteClass") BtleDevice btleDevice = new BtleDevice(device);
-            btleDevice.setRSSI(rssi);
-            mBtDevicesByName.put(address, btleDevice);
-            mBtDevicesList.add(btleDevice);
+    public void addDeviceOrUpdateRssi(BluetoothDevice device, int rssi) {
+        // this check is the reason we have mBtDevicesByName
+        if (!mBtDevicesByName.containsKey(device.getAddress())) {
+            addDevice(device, rssi);
         } else {
-            mBtDevicesByName.get(address).setRSSI(rssi);
+            mBtDevicesByName.get(device.getAddress()).setRSSI(rssi);
         }
         btleListAdapter.notifyDataSetChanged();
+    }
+
+    private void addDevice(BluetoothDevice device, int rssi) {
+        BtleDevice btleDevice = new BtleDevice(device);
+        btleDevice.setRSSI(rssi);
+        mBtDevicesByName.put(device.getAddress(), btleDevice);
+        mBtDevicesList.add(btleDevice);
     }
 }

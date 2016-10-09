@@ -11,9 +11,9 @@ public class BroadcastReceiver_BTLE_GATT extends BroadcastReceiver {
 
     private boolean mConnected = false;
 
-    private Activity_BTLE_Services activity;
+    private BtleDeviceActivity activity;
 
-    public BroadcastReceiver_BTLE_GATT(Activity_BTLE_Services activity) {
+    public BroadcastReceiver_BTLE_GATT(BtleDeviceActivity activity) {
         this.activity = activity;
     }
 

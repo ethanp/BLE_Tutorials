@@ -10,8 +10,8 @@ import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.TextView;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Kelvin on 5/8/16.
@@ -19,11 +19,11 @@ import java.util.HashMap;
 public class ListAdapter_BTLE_Services extends BaseExpandableListAdapter {
 
     private Activity activity;
-    private ArrayList<BluetoothGattService> services_ArrayList;
-    private HashMap<String, ArrayList<BluetoothGattCharacteristic>> characteristics_HashMap;
+    private List<BluetoothGattService> services_ArrayList;
+    private Map<String, List<BluetoothGattCharacteristic>> characteristics_HashMap;
 
-    public ListAdapter_BTLE_Services(Activity activity, ArrayList<BluetoothGattService> listDataHeader,
-                                     HashMap<String, ArrayList<BluetoothGattCharacteristic>> listChildData) {
+    public ListAdapter_BTLE_Services(Activity activity, List<BluetoothGattService> listDataHeader,
+                                     Map<String, List<BluetoothGattCharacteristic>> listChildData) {
 
         this.activity = activity;
         this.services_ArrayList = listDataHeader;

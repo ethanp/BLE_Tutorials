@@ -17,24 +17,25 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class Activity_BTLE_Services extends AppCompatActivity implements ExpandableListView.OnChildClickListener {
-    public static final String EXTRA_NAME = "android.aviles.bletutorial.Activity_BTLE_Services.NAME";
-    public static final String EXTRA_ADDRESS = "android.aviles.bletutorial.Activity_BTLE_Services.ADDRESS";
-    private final static String TAG = Activity_BTLE_Services.class.getSimpleName();
+@SuppressWarnings({"LocalVariableOfConcreteClass", "ConstantConditions"})
+public class BtleDeviceActivity extends AppCompatActivity implements ExpandableListView.OnChildClickListener {
+    public static final String EXTRA_NAME = "android.aviles.bletutorial.BtleDeviceActivity.NAME";
+    public static final String EXTRA_ADDRESS = "android.aviles.bletutorial.BtleDeviceActivity.ADDRESS";
+    private final static String TAG = BtleDeviceActivity.class.getSimpleName();
+
     private ListAdapter_BTLE_Services expandableListAdapter;
-    private ExpandableListView expandableListView;
-
-    private ArrayList<BluetoothGattService> services_ArrayList;
-    private HashMap<String, BluetoothGattCharacteristic> characteristics_HashMap;
-    private HashMap<String, ArrayList<BluetoothGattCharacteristic>> characteristics_HashMapList;
+    private List<BluetoothGattService> servicesList;
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") // written but never read
+    private Map<String, BluetoothGattCharacteristic> characteristicMap;
+    private Map<String, List<BluetoothGattCharacteristic>> characteristicListMap;
 
     private Intent mBTLE_Service_Intent;
     private Service_BTLE_GATT mBTLE_Service;
-    private boolean mBTLE_Service_Bound;
+    private boolean mBTLE_Service_Bound; // written but never read
     private BroadcastReceiver_BTLE_GATT mGattUpdateReceiver;
 
-    private String name;
     private String address;
 
     private ServiceConnection mBTLE_ServiceConnection = new ServiceConnection() {
@@ -79,17 +80,16 @@ public class Activity_BTLE_Services extends AppCompatActivity implements Expanda
         setContentView(R.layout.activity_btle_services);
 
         Intent intent = getIntent();
-        name = intent.getStringExtra(Activity_BTLE_Services.EXTRA_NAME);
-        address = intent.getStringExtra(Activity_BTLE_Services.EXTRA_ADDRESS);
+        String name = intent.getStringExtra(BtleDeviceActivity.EXTRA_NAME);
+        address = intent.getStringExtra(BtleDeviceActivity.EXTRA_ADDRESS);
 
-        services_ArrayList = new ArrayList<>();
-        characteristics_HashMap = new HashMap<>();
-        characteristics_HashMapList = new HashMap<>();
-
+        servicesList = new ArrayList<>();
+        characteristicMap = new HashMap<>();
+        characteristicListMap = new HashMap<>();
         expandableListAdapter = new ListAdapter_BTLE_Services(
-                this, services_ArrayList, characteristics_HashMapList);
+                this, servicesList, characteristicListMap);
 
-        expandableListView = (ExpandableListView) findViewById(R.id.lv_expandable);
+        ExpandableListView expandableListView = (ExpandableListView) findViewById(R.id.lv_expandable);
         expandableListView.setAdapter(expandableListAdapter);
         expandableListView.setOnChildClickListener(this);
 
@@ -106,16 +106,9 @@ public class Activity_BTLE_Services extends AppCompatActivity implements Expanda
         mBTLE_Service_Intent = null;
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
+    /**
+     * Called after onCreate(Bundle) or onRestart()
+     */
     @Override
     protected void onStart() {
         super.onStart();
@@ -131,8 +124,8 @@ public class Activity_BTLE_Services extends AppCompatActivity implements Expanda
     @Override
     public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
 
-        BluetoothGattCharacteristic characteristic = characteristics_HashMapList.get(
-                services_ArrayList.get(groupPosition).getUuid().toString())
+        BluetoothGattCharacteristic characteristic = characteristicListMap.get(
+                servicesList.get(groupPosition).getUuid().toString())
                 .get(childPosition);
 
         if (Utils.hasWriteProperty(characteristic.getProperties()) != 0) {
@@ -162,25 +155,25 @@ public class Activity_BTLE_Services extends AppCompatActivity implements Expanda
 
         if (mBTLE_Service != null) {
 
-            services_ArrayList.clear();
-            characteristics_HashMap.clear();
-            characteristics_HashMapList.clear();
+            servicesList.clear();
+            characteristicMap.clear();
+            characteristicListMap.clear();
 
             List<BluetoothGattService> servicesList = mBTLE_Service.getSupportedGattServices();
 
             for (BluetoothGattService service : servicesList) {
 
-                services_ArrayList.add(service);
+                this.servicesList.add(service);
 
                 List<BluetoothGattCharacteristic> characteristicsList = service.getCharacteristics();
                 ArrayList<BluetoothGattCharacteristic> newCharacteristicsList = new ArrayList<>();
 
                 for (BluetoothGattCharacteristic characteristic : characteristicsList) {
-                    characteristics_HashMap.put(characteristic.getUuid().toString(), characteristic);
+                    characteristicMap.put(characteristic.getUuid().toString(), characteristic);
                     newCharacteristicsList.add(characteristic);
                 }
 
-                characteristics_HashMapList.put(service.getUuid().toString(), newCharacteristicsList);
+                characteristicListMap.put(service.getUuid().toString(), newCharacteristicsList);
             }
 
             if (servicesList != null && servicesList.size() > 0) {

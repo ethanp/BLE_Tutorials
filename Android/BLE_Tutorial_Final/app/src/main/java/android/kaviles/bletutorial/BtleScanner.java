@@ -31,7 +31,7 @@ public class BtleScanner {
                         mHandler.post(new Runnable() {
                             @Override
                             public void run() {
-                                mainActivity.addDevice(device, new_rssi);
+                                mainActivity.addDeviceOrUpdateRssi(device, new_rssi);
                             }
                         });
                     }

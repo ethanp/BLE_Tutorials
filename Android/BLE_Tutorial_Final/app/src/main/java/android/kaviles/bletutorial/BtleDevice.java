@@ -4,6 +4,12 @@ import android.bluetooth.BluetoothDevice;
 
 /**
  * Created by Kelvin on 5/8/16.
+ *
+ * Seems like this class is only useful if you really want to display rssi info.
+ *
+ * This class enables access to the standard Android BluetoothDevice API,
+ * bundled up with each devices corresponding rssi given from the original
+ * `BluetoothAdapter.LeScanCallback`.
  */
 public class BtleDevice {
 
