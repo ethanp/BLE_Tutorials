@@ -22,22 +22,22 @@ import java.util.UUID;
 /**
  * Created by Kelvin on 5/8/16.
  */
-public class Service_BTLE_GATT extends Service {
-    public final static String ACTION_GATT_CONNECTED = "android.kaviles.bletutorial.Service_BTLE_GATT.ACTION_GATT_CONNECTED";
-    public final static String ACTION_GATT_DISCONNECTED = "android.kaviles.bletutorial.Service_BTLE_GATT.ACTION_GATT_DISCONNECTED";
-    public final static String ACTION_GATT_SERVICES_DISCOVERED = "android.kaviles.bletutorial.Service_BTLE_GATT.ACTION_GATT_SERVICES_DISCOVERED";
-    public final static String ACTION_DATA_AVAILABLE = "android.kaviles.bletutorial.Service_BTLE_GATT.ACTION_DATA_AVAILABLE";
-    public final static String EXTRA_UUID = "android.kaviles.bletutorial.Service_BTLE_GATT.EXTRA_UUID";
-    public final static String EXTRA_DATA = "android.kaviles.bletutorial.Service_BTLE_GATT.EXTRA_DATA";
+public class BtleGattService extends Service {
+    public final static String ACTION_GATT_CONNECTED = "android.kaviles.bletutorial.BtleGattService.ACTION_GATT_CONNECTED";
+    public final static String ACTION_GATT_DISCONNECTED = "android.kaviles.bletutorial.BtleGattService.ACTION_GATT_DISCONNECTED";
+    public final static String ACTION_GATT_SERVICES_DISCOVERED = "android.kaviles.bletutorial.BtleGattService.ACTION_GATT_SERVICES_DISCOVERED";
+    public final static String ACTION_DATA_AVAILABLE = "android.kaviles.bletutorial.BtleGattService.ACTION_DATA_AVAILABLE";
+    public final static String EXTRA_UUID = "android.kaviles.bletutorial.BtleGattService.EXTRA_UUID";
+    public final static String EXTRA_DATA = "android.kaviles.bletutorial.BtleGattService.EXTRA_DATA";
     /**
      * Service for managing connection and data communication with a GATT server hosted on a
      * given Bluetooth LE device.
      */
-    private final static String TAG = Service_BTLE_GATT.class.getSimpleName();
+    private final static String TAG = BtleGattService.class.getSimpleName();
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
-    private final IBinder mBinder = new BTLeServiceBinder();
+    private final IBinder mBinder = new BtleServiceBinder();
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
     private String mBluetoothDeviceAddress;
@@ -320,10 +320,10 @@ public class Service_BTLE_GATT extends Service {
         return mBluetoothGatt.getServices();
     }
 
-    public class BTLeServiceBinder extends Binder {
+    public class BtleServiceBinder extends Binder {
 
-        Service_BTLE_GATT getService() {
-            return Service_BTLE_GATT.this;
+        BtleGattService getService() {
+            return BtleGattService.this;
         }
     }
 }

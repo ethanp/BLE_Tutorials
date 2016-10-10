@@ -16,41 +16,41 @@ import java.util.Map;
 /**
  * Created by Kelvin on 5/8/16.
  */
-public class ListAdapter_BTLE_Services extends BaseExpandableListAdapter {
+@SuppressWarnings("ALL")
+public class BtleServiceListAdapter extends BaseExpandableListAdapter {
 
     private Activity activity;
-    private List<BluetoothGattService> services_ArrayList;
-    private Map<String, List<BluetoothGattCharacteristic>> characteristics_HashMap;
+    private List<BluetoothGattService> services;
+    private Map<String, List<BluetoothGattCharacteristic>> characteristics;
 
-    public ListAdapter_BTLE_Services(Activity activity, List<BluetoothGattService> listDataHeader,
-                                     Map<String, List<BluetoothGattCharacteristic>> listChildData) {
-
+    public BtleServiceListAdapter(Activity activity, List<BluetoothGattService> listDataHeader,
+                                  Map<String, List<BluetoothGattCharacteristic>> listChildData) {
         this.activity = activity;
-        this.services_ArrayList = listDataHeader;
-        this.characteristics_HashMap = listChildData;
+        this.services = listDataHeader;
+        this.characteristics = listChildData;
     }
 
     @Override
     public int getGroupCount() {
-        return services_ArrayList.size();
+        return services.size();
     }
 
     @Override
     public int getChildrenCount(int groupPosition) {
-        return characteristics_HashMap.get(
-                services_ArrayList.get(groupPosition).getUuid().toString()).size();
+        String serviceUuid = services.get(groupPosition).getUuid().toString();
+        int numCharacteristcs = characteristics.get(serviceUuid).size();
+        return numCharacteristcs;
     }
 
     @Override
     public Object getGroup(int groupPosition) {
-        return services_ArrayList.get(groupPosition);
+        return services.get(groupPosition);
     }
 
     @Override
     public Object getChild(int groupPosition, int childPosition) {
-
-        return characteristics_HashMap.get(
-                services_ArrayList.get(groupPosition).getUuid().toString()).get(childPosition);
+        return characteristics.get(
+                services.get(groupPosition).getUuid().toString()).get(childPosition);
     }
 
     @Override
@@ -70,27 +70,21 @@ public class ListAdapter_BTLE_Services extends BaseExpandableListAdapter {
 
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
-
         BluetoothGattService bluetoothGattService = (BluetoothGattService) getGroup(groupPosition);
-
         String serviceUUID = bluetoothGattService.getUuid().toString();
         if (convertView == null) {
             LayoutInflater inflater =
                     (LayoutInflater) activity.getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = inflater.inflate(R.layout.btle_service_list_item, null);
         }
-
         TextView tv_service = (TextView) convertView.findViewById(R.id.tv_service_uuid);
         tv_service.setText("S: " + serviceUUID);
-
         return convertView;
     }
 
     @Override
     public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-
         BluetoothGattCharacteristic bluetoothGattCharacteristic = (BluetoothGattCharacteristic) getChild(groupPosition, childPosition);
-
         String characteristicUUID = bluetoothGattCharacteristic.getUuid().toString();
         if (convertView == null) {
             LayoutInflater inflater =
@@ -105,30 +99,23 @@ public class ListAdapter_BTLE_Services extends BaseExpandableListAdapter {
 
         TextView tv_property = (TextView) convertView.findViewById(R.id.tv_properties);
         StringBuilder sb = new StringBuilder();
-
         if (Utils.hasReadProperty(properties) != 0) {
             sb.append("R");
         }
-
         if (Utils.hasWriteProperty(properties) != 0) {
             sb.append("W");
         }
-
         if (Utils.hasNotifyProperty(properties) != 0) {
             sb.append("N");
         }
-
         tv_property.setText(sb.toString());
-
         TextView tv_value = (TextView) convertView.findViewById(R.id.tv_value);
-
         byte[] data = bluetoothGattCharacteristic.getValue();
         if (data != null) {
             tv_value.setText("Value: " + Utils.hexToString(data));
         } else {
             tv_value.setText("Value: ---");
         }
-
         return convertView;
     }
 

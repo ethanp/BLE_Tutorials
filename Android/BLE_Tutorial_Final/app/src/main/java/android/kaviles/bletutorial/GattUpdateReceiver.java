@@ -7,13 +7,13 @@ import android.content.Intent;
 /**
  * Created by Kelvin on 5/8/16.
  */
-public class BroadcastReceiver_BTLE_GATT extends BroadcastReceiver {
+public class GattUpdateReceiver extends BroadcastReceiver {
 
     private boolean mConnected = false;
 
     private BtleDeviceActivity activity;
 
-    public BroadcastReceiver_BTLE_GATT(BtleDeviceActivity activity) {
+    public GattUpdateReceiver(BtleDeviceActivity activity) {
         this.activity = activity;
     }
 
@@ -28,18 +28,18 @@ public class BroadcastReceiver_BTLE_GATT extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         final String action = intent.getAction();
 
-        if (Service_BTLE_GATT.ACTION_GATT_CONNECTED.equals(action)) {
+        if (BtleGattService.ACTION_GATT_CONNECTED.equals(action)) {
             mConnected = true;
-        } else if (Service_BTLE_GATT.ACTION_GATT_DISCONNECTED.equals(action)) {
+        } else if (BtleGattService.ACTION_GATT_DISCONNECTED.equals(action)) {
             mConnected = false;
             Utils.toast(activity.getApplicationContext(), "Disconnected From Device");
             activity.finish();
-        } else if (Service_BTLE_GATT.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
+        } else if (BtleGattService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
             activity.updateServices();
-        } else if (Service_BTLE_GATT.ACTION_DATA_AVAILABLE.equals(action)) {
+        } else if (BtleGattService.ACTION_DATA_AVAILABLE.equals(action)) {
 
-//            String uuid = intent.getStringExtra(Service_BTLE_GATT.EXTRA_UUID);
-//            String data = intent.getStringExtra(Service_BTLE_GATT.EXTRA_DATA);
+//            String uuid = intent.getStringExtra(BtleGattService.EXTRA_UUID);
+//            String data = intent.getStringExtra(BtleGattService.EXTRA_DATA);
 
             activity.updateCharacteristic();
         }

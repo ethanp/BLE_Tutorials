@@ -25,39 +25,34 @@ public class BtleDeviceActivity extends AppCompatActivity implements ExpandableL
     public static final String EXTRA_ADDRESS = "android.aviles.bletutorial.BtleDeviceActivity.ADDRESS";
     private final static String TAG = BtleDeviceActivity.class.getSimpleName();
 
-    private ListAdapter_BTLE_Services expandableListAdapter;
-    private List<BluetoothGattService> servicesList;
+    private BtleServiceListAdapter expandableListAdapter;
+    private List<BluetoothGattService> services;
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") // written but never read
-    private Map<String, BluetoothGattCharacteristic> characteristicMap;
-    private Map<String, List<BluetoothGattCharacteristic>> characteristicListMap;
+    private Map<String, BluetoothGattCharacteristic> charByUuid;
+    private Map<String, List<BluetoothGattCharacteristic>> charsByServiceUuid;
 
-    private Intent mBTLE_Service_Intent;
-    private Service_BTLE_GATT mBTLE_Service;
-    private boolean mBTLE_Service_Bound; // written but never read
-    private BroadcastReceiver_BTLE_GATT mGattUpdateReceiver;
+    private Intent serviceViewIntent;
+    private BtleGattService btleGattService;
+    @SuppressWarnings("unused")
+    private boolean serviceIsBound;
+    private GattUpdateReceiver mGattUpdateReceiver;
 
     private String address;
 
-    private ServiceConnection mBTLE_ServiceConnection = new ServiceConnection() {
-
+    private ServiceConnection mBtleServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName className, IBinder service) {
-
             // We've bound to LocalService, cast the IBinder and get LocalService instance
-            Service_BTLE_GATT.BTLeServiceBinder binder = (Service_BTLE_GATT.BTLeServiceBinder) service;
-            mBTLE_Service = binder.getService();
-            mBTLE_Service_Bound = true;
-
-            if (!mBTLE_Service.initialize()) {
+            BtleGattService.BtleServiceBinder binder = (BtleGattService.BtleServiceBinder) service;
+            btleGattService = binder.getService();
+            serviceIsBound = true;
+            if (!btleGattService.initialize()) {
                 Log.e(TAG, "Unable to initialize Bluetooth");
                 finish();
             }
-
-            mBTLE_Service.connect(address);
-
+            btleGattService.connect(address);
             // Automatically connects to the device upon successful start-up initialization.
 //            mBTLeService.connect(mBTLeDeviceAddress);
-
 //            mBluetoothGatt = mBTLeService.getmBluetoothGatt();
 //            mGattUpdateReceiver.setBluetoothGatt(mBluetoothGatt);
 //            mGattUpdateReceiver.setBTLeService(mBTLeService);
@@ -65,8 +60,8 @@ public class BtleDeviceActivity extends AppCompatActivity implements ExpandableL
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
-            mBTLE_Service = null;
-            mBTLE_Service_Bound = false;
+            btleGattService = null;
+            serviceIsBound = false;
 
 //            mBluetoothGatt = null;
 //            mGattUpdateReceiver.setBluetoothGatt(null);
@@ -78,21 +73,17 @@ public class BtleDeviceActivity extends AppCompatActivity implements ExpandableL
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_btle_services);
-
         Intent intent = getIntent();
         String name = intent.getStringExtra(BtleDeviceActivity.EXTRA_NAME);
         address = intent.getStringExtra(BtleDeviceActivity.EXTRA_ADDRESS);
-
-        servicesList = new ArrayList<>();
-        characteristicMap = new HashMap<>();
-        characteristicListMap = new HashMap<>();
-        expandableListAdapter = new ListAdapter_BTLE_Services(
-                this, servicesList, characteristicListMap);
-
+        services = new ArrayList<>();
+        charByUuid = new HashMap<>();
+        charsByServiceUuid = new HashMap<>();
+        expandableListAdapter = new BtleServiceListAdapter(
+                this, services, charsByServiceUuid);
         ExpandableListView expandableListView = (ExpandableListView) findViewById(R.id.lv_expandable);
         expandableListView.setAdapter(expandableListAdapter);
         expandableListView.setOnChildClickListener(this);
-
         ((TextView) findViewById(R.id.tv_name)).setText(name + " Services");
         ((TextView) findViewById(R.id.tv_address)).setText(address);
     }
@@ -100,10 +91,9 @@ public class BtleDeviceActivity extends AppCompatActivity implements ExpandableL
     @Override
     protected void onStop() {
         super.onStop();
-
         unregisterReceiver(mGattUpdateReceiver);
-        unbindService(mBTLE_ServiceConnection);
-        mBTLE_Service_Intent = null;
+        unbindService(mBtleServiceConnection);
+        serviceViewIntent = null;
     }
 
     /**
@@ -112,71 +102,54 @@ public class BtleDeviceActivity extends AppCompatActivity implements ExpandableL
     @Override
     protected void onStart() {
         super.onStart();
-
-        mGattUpdateReceiver = new BroadcastReceiver_BTLE_GATT(this);
+        mGattUpdateReceiver = new GattUpdateReceiver(this);
         registerReceiver(mGattUpdateReceiver, Utils.makeGattUpdateIntentFilter());
-
-        mBTLE_Service_Intent = new Intent(this, Service_BTLE_GATT.class);
-        bindService(mBTLE_Service_Intent, mBTLE_ServiceConnection, Context.BIND_AUTO_CREATE);
-        startService(mBTLE_Service_Intent);
+        serviceViewIntent = new Intent(this, BtleGattService.class);
+        bindService(serviceViewIntent, mBtleServiceConnection, Context.BIND_AUTO_CREATE);
+        startService(serviceViewIntent);
     }
 
     @Override
     public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
-
-        BluetoothGattCharacteristic characteristic = characteristicListMap.get(
-                servicesList.get(groupPosition).getUuid().toString())
+        BluetoothGattCharacteristic characteristic = charsByServiceUuid.get(
+                services.get(groupPosition).getUuid().toString())
                 .get(childPosition);
-
         if (Utils.hasWriteProperty(characteristic.getProperties()) != 0) {
             String uuid = characteristic.getUuid().toString();
-
             Dialog_BTLE_Characteristic dialog_btle_characteristic = new Dialog_BTLE_Characteristic();
-
             dialog_btle_characteristic.setTitle(uuid);
-            dialog_btle_characteristic.setService(mBTLE_Service);
+            dialog_btle_characteristic.setService(btleGattService);
             dialog_btle_characteristic.setCharacteristic(characteristic);
-
             dialog_btle_characteristic.show(getFragmentManager(), "Dialog_BTLE_Characteristic");
         } else if (Utils.hasReadProperty(characteristic.getProperties()) != 0) {
-            if (mBTLE_Service != null) {
-                mBTLE_Service.readCharacteristic(characteristic);
+            if (btleGattService != null) {
+                btleGattService.readCharacteristic(characteristic);
             }
         } else if (Utils.hasNotifyProperty(characteristic.getProperties()) != 0) {
-            if (mBTLE_Service != null) {
-                mBTLE_Service.setCharacteristicNotification(characteristic, true);
+            if (btleGattService != null) {
+                btleGattService.setCharacteristicNotification(characteristic, true);
             }
         }
-
         return false;
     }
 
     public void updateServices() {
-
-        if (mBTLE_Service != null) {
-
-            servicesList.clear();
-            characteristicMap.clear();
-            characteristicListMap.clear();
-
-            List<BluetoothGattService> servicesList = mBTLE_Service.getSupportedGattServices();
-
+        if (btleGattService != null) {
+            services.clear();
+            charByUuid.clear();
+            charsByServiceUuid.clear();
+            List<BluetoothGattService> servicesList = btleGattService.getSupportedGattServices();
             for (BluetoothGattService service : servicesList) {
-
-                this.servicesList.add(service);
-
+                this.services.add(service);
                 List<BluetoothGattCharacteristic> characteristicsList = service.getCharacteristics();
                 ArrayList<BluetoothGattCharacteristic> newCharacteristicsList = new ArrayList<>();
-
                 for (BluetoothGattCharacteristic characteristic : characteristicsList) {
-                    characteristicMap.put(characteristic.getUuid().toString(), characteristic);
+                    charByUuid.put(characteristic.getUuid().toString(), characteristic);
                     newCharacteristicsList.add(characteristic);
                 }
-
-                characteristicListMap.put(service.getUuid().toString(), newCharacteristicsList);
+                charsByServiceUuid.put(service.getUuid().toString(), newCharacteristicsList);
             }
-
-            if (servicesList != null && servicesList.size() > 0) {
+            if (servicesList != null && !servicesList.isEmpty()) {
                 expandableListAdapter.notifyDataSetChanged();
             }
         }

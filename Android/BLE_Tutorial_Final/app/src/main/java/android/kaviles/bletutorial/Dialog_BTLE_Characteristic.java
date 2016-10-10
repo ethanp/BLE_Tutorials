@@ -15,7 +15,7 @@ import android.widget.EditText;
 public class Dialog_BTLE_Characteristic extends DialogFragment implements DialogInterface.OnClickListener {
 
     private String title;
-    private Service_BTLE_GATT service;
+    private BtleGattService service;
     private BluetoothGattCharacteristic characteristic;
 
     @Override
@@ -58,7 +58,7 @@ public class Dialog_BTLE_Characteristic extends DialogFragment implements Dialog
         this.title = title;
     }
 
-    public void setService(Service_BTLE_GATT service) {
+    public void setService(BtleGattService service) {
         this.service = service;
     }
 

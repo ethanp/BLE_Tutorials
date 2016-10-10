@@ -21,7 +21,7 @@
         <activity android:name=".BtleDeviceActivity" />
 
         <service
-            android:name=".Service_BTLE_GATT"
+            android:name=".BtleGattService"
             android:enabled="true"
             android:exported="true"></service>
     </application>

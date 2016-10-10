@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity implements
     private BtleListAdapter btleListAdapter;
     private Button scanButton;
 
-    private CreateToastOnBtAdptrStateChange btAdaptorStateChangeListener;
+    private CreateToastOnBtAdptrStateChange toastOnBtAdptrStateChange;
     private BtleScanner mBtleScanner;
 
     @Override
@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements
             finish();
         }
 
-        btAdaptorStateChangeListener = new CreateToastOnBtAdptrStateChange(getApplicationContext());
+        toastOnBtAdptrStateChange = new CreateToastOnBtAdptrStateChange(getApplicationContext());
         final int scanPeriodFiveSeconds = 5000;
         final int minSignalStrength = -75;
         mBtleScanner = new BtleScanner(this, scanPeriodFiveSeconds, minSignalStrength);
@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onStop() {
         super.onStop();
-        unregisterReceiver(btAdaptorStateChangeListener);
+        unregisterReceiver(toastOnBtAdptrStateChange);
         stopScan();
     }
 
@@ -81,19 +81,24 @@ public class MainActivity extends AppCompatActivity implements
         mBtleScanner.stop();
     }
 
+    /**
+     * Called when an Activity you launched exits, giving you the requestCode
+     * you started it with, the resultCode it returned, and any additional
+     * data from it.
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // Check which request we're responding to.
-        // These are the response codes that we asked for when calling "startActivityForResult"
         if (requestCode == REQUEST_ENABLE_BT) {
-            // Make sure the request was successful
             if (resultCode == RESULT_OK) {
+                // the request was successful
                 Utils.toast(getApplicationContext(), "Thank you for turning on Bluetooth");
             } else if (resultCode == RESULT_CANCELED) {
+                // user denied the request
                 Utils.toast(getApplicationContext(), "Please turn on Bluetooth");
             }
         } else if (requestCode == BTLE_SERVICES) {
-            // not implemented
+            // we just got back from the device-specific Activity (nothing to do)
         }
     }
 
@@ -108,22 +113,22 @@ public class MainActivity extends AppCompatActivity implements
         super.onStart();
         // this intent is globally unique, so we just look for it
         IntentFilter changedFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        registerReceiver(btAdaptorStateChangeListener, changedFilter);
+        // Register a BroadcastReceiver to be run in the main activity thread
+        // with any broadcast Intent that matches `filter` in the main application thread.
+        registerReceiver(toastOnBtAdptrStateChange, changedFilter);
     }
 
     /**
-     * user clicked on a specific bluetooth device in the list
+     * User clicked on a specific bluetooth device in the list.
+     * Stop scanning, and go to an activity for that device.
      */
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Context context = view.getContext();
         Utils.toast(context, "List Item clicked");
-        // do something with the text views and start the next activity.
         stopScan();
-
         String name = mBtDevicesList.get(position).getName();
         String address = mBtDevicesList.get(position).getAddress();
-
         Intent intent = new Intent(this, BtleDeviceActivity.class);
         intent.putExtra(BtleDeviceActivity.EXTRA_NAME, name);
         intent.putExtra(BtleDeviceActivity.EXTRA_ADDRESS, address);
